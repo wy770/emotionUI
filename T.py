@@ -1,5 +1,7 @@
 import base64
 import io
+import logging
+
 from flask import Flask, request, jsonify, send_from_directory
 from PIL import Image, ImageDraw, ImageFont
 import torch
@@ -128,24 +130,32 @@ def index():
 
 @app.route('/api/emotion', methods=['POST'])
 def get_emotion():
-    data = request.json
-    image_data = data['image'].split(",")[1]
-    image = Image.open(io.BytesIO(base64.b64decode(image_data)))
-    image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    gray = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
-    faces = emo_cls.face_cascade.detectMultiScale(gray, 1.3, 5)
+    try:
+        data = request.json
+        image_data = data['image'].split(",")[1]
+        image = Image.open(io.BytesIO(base64.b64decode(image_data)))
+        image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        gray = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
+        faces = emo_cls.face_cascade.detectMultiScale(gray, 1.3, 5)
 
-    for (x, y, w, h) in faces:
-        face_img = image_cv[y:y + h, x:x + w]
-        face_img = cv2.resize(face_img, (48, 48))
-        face_img_pil = Image.fromarray(cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB))
-        emotion, _ = emo_cls.get_emotion(face_img_pil)
-        image = emo_cls.draw_face_box(image, (x, y, w, h), emotion)
+        if len(faces) == 0:
+            return jsonify({'error': 'No faces detected'}), 400
 
-    buffered = io.BytesIO()
-    image.save(buffered, format="JPEG")
-    img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    return jsonify({'image': img_str})
+        for (x, y, w, h) in faces:
+            face_img = image_cv[y:y + h, x:x + w]
+            face_img = cv2.resize(face_img, (48, 48))
+            face_img_pil = Image.fromarray(cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB))
+            emotion, _ = emo_cls.get_emotion(face_img_pil)
+            image = emo_cls.draw_face_box(image, (x, y, w, h), emotion)
+
+        buffered = io.BytesIO()
+        image.save(buffered, format="JPEG")
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return jsonify({'image': img_str, 'emotion': emotion})
+    except Exception as e:
+        logging.error("Error processing image: %s", e)
+        return jsonify({'error': str(e)}), 500
+
 
 
 if __name__ == '__main__':

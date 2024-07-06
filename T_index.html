@@ -54,38 +54,46 @@
         const video = document.getElementById('video');
 
         // 访问摄像头
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-                video.play();
+        function getUserMediaSupported() {
+            return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        }
 
-                video.addEventListener('loadeddata', () => {
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+        if (getUserMediaSupported()) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.play();
 
-                    setInterval(() => {
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const imageData = canvas.toDataURL('image/jpeg');
-                        fetch('/api/emotion', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ image: imageData })
-                        })
-                        .then(response => response.json())
-                        .then(result => {
-                            emotionImage.src = 'data:image/jpeg;base64,' + result.image;
-                            emotionResult.textContent = result.emotion; // 更新情绪结果显示
-                        })
-                        .catch(err => console.error('Error:', err));
-                    }, 1000); // 每秒发送一次
+                    video.addEventListener('loadeddata', () => {
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+
+                        setInterval(() => {
+                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            const imageData = canvas.toDataURL('image/jpeg');
+                            fetch('/api/emotion', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ image: imageData })
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                emotionImage.src = 'data:image/jpeg;base64,' + result.image;
+                                emotionResult.textContent = result.emotion; // 更新情绪结果显示
+                            })
+                            .catch(err => console.error('Error:', err));
+                        }, 1000); // 每秒发送一次
+                    });
+
+                })
+                .catch(err => {
+                    console.error("访问摄像头失败:", err);
                 });
-
-            })
-            .catch(err => {
-                console.error("访问摄像头失败:", err);
-            });
+        } else {
+            console.error("当前浏览器不支持 getUserMedia API");
+        }
     </script>
 </body>
 </html>

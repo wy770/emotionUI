@@ -73,8 +73,9 @@
                     video.addEventListener('loadeddata', () => {
                         const canvas = document.createElement('canvas');
                         const context = canvas.getContext('2d');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
+                       canvas.width = video.videoWidth / 2; // 降低分辨率
+    canvas.height = video.videoHeight / 2; // 降低分辨率
+
 
                         setInterval(() => {
                             context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -90,7 +91,7 @@
                                 emotionResult.textContent = result.emotion;
                             })
                             .catch(err => console.error('Error:', err));
-                        }, 1000);
+                        }, 250);
                     });
 
                 })

@@ -60,7 +60,6 @@
         const video = document.getElementById('video');
         const errorMessage = document.getElementById('error-message');
 
-        // 访问摄像头
         function getUserMediaSupported() {
             return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
         }
@@ -88,10 +87,10 @@
                             .then(response => response.json())
                             .then(result => {
                                 emotionImage.src = 'data:image/jpeg;base64,' + result.image;
-                                emotionResult.textContent = result.emotion; // 更新情绪结果显示
+                                emotionResult.textContent = result.emotion;
                             })
                             .catch(err => console.error('Error:', err));
-                        }, 1000); // 每秒发送一次
+                        }, 1000);
                     });
 
                 })
@@ -106,4 +105,3 @@
     </script>
 </body>
 </html>
-

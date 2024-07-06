@@ -36,30 +36,34 @@
             font-size: 18px;
             color: #333;
         }
+        video {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>实时情绪识别</h1>
+        <video id="video" autoplay></video>
         <img id="emotion-image" src="" alt="Emotion Image">
         <div id="emotion">情绪结果：<span id="emotionResult"></span></div>
     </div>
     <script>
         const emotionImage = document.getElementById('emotion-image');
         const emotionResult = document.getElementById('emotionResult');
+        const video = document.getElementById('video');
 
         // 访问摄像头
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
-                const video = document.createElement('video');
                 video.srcObject = stream;
                 video.play();
 
                 video.addEventListener('loadeddata', () => {
                     const canvas = document.createElement('canvas');
                     const context = canvas.getContext('2d');
-                    canvas.width = video.videoWidth / 2; // 降低分辨率
-                    canvas.height = video.videoHeight / 2; // 降低分辨率
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
 
                     setInterval(() => {
                         context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -72,9 +76,10 @@
                         .then(response => response.json())
                         .then(result => {
                             emotionImage.src = 'data:image/jpeg;base64,' + result.image;
+                            emotionResult.textContent = result.emotion; // 更新情绪结果显示
                         })
                         .catch(err => console.error('Error:', err));
-                    }, 250); // 每秒发送一次
+                    }, 1000); // 每秒发送一次
                 });
 
             })

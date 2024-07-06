@@ -77,7 +77,7 @@
     canvas.height = video.videoHeight / 2; // 降低分辨率
 
 
-                   setInterval(() => {
+   setInterval(() => {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = canvas.toDataURL('image/jpeg');
     fetch('/api/emotion', {
@@ -85,7 +85,14 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imageData })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                throw new Error(errorData.error);
+            });
+        }
+        return response.json();
+    })
     .then(result => {
         if (result.error) {
             errorMessage.textContent = "Error: " + result.error;
@@ -99,6 +106,7 @@
         console.error('Error:', err);
     });
 }, 250);
+
 
                     });
 

@@ -77,21 +77,29 @@
     canvas.height = video.videoHeight / 2; // 降低分辨率
 
 
-                        setInterval(() => {
-                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                            const imageData = canvas.toDataURL('image/jpeg');
-                            fetch('/api/emotion', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ image: imageData })
-                            })
-                            .then(response => response.json())
-                            .then(result => {
-                                emotionImage.src = 'data:image/jpeg;base64,' + result.image;
-                                emotionResult.textContent = result.emotion;
-                            })
-                            .catch(err => console.error('Error:', err));
-                        }, 250);
+                   setInterval(() => {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = canvas.toDataURL('image/jpeg');
+    fetch('/api/emotion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            errorMessage.textContent = "Error: " + result.error;
+        } else {
+            emotionImage.src = 'data:image/jpeg;base64,' + result.image;
+            emotionResult.textContent = result.emotion;
+        }
+    })
+    .catch(err => {
+        errorMessage.textContent = "Fetch error: " + err.message;
+        console.error('Error:', err);
+    });
+}, 250);
+
                     });
 
                 })
